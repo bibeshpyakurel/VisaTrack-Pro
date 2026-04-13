@@ -1,0 +1,15 @@
+{
+  "name": "visatrack-pro",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "sync:data": "npm run sync:uscis --prefix backend",
+    "seed": "npm run sync:data",
+    "seed:demo": "node backend/scripts/seedDemo.js",
+    "import": "node backend/scripts/importCSV.js"
+  }
+}
