@@ -1,176 +1,206 @@
 # VisaTrack Pro
 
-**Smarter H-1B employer intelligence. Powered by real USCIS data and AI.**
+VisaTrack Pro is an H-1B employer intelligence platform built on top of official USCIS employer disclosure data. It transforms yearly USCIS CSV releases into a searchable product with company profiles, state-level analytics, trend views, enrichment workflows, and a REST API.
 
-VisaTrack Pro ingests official USCIS H-1B petition data and serves it through a full-stack web platform with an interactive US map, company search, AI-enriched profiles, trend charts, and a clean REST API.
+The project is designed to make H-1B employer data easier to explore, compare, and operationalize than the raw USCIS download experience allows on its own.
 
----
+## Product Overview
 
-## Quick Start
+VisaTrack Pro focuses on employer-level and geography-level visibility across the H-1B dataset.
 
-### 1. Install dependencies
+It is built to answer questions such as:
 
-```bash
-npm run install:all
-```
+- Which states show the highest H-1B approval activity?
+- Which employers appear consistently across fiscal years?
+- How do approvals and denials evolve over time for a company or a state?
+- Which employers dominate a given state or industry slice?
+- What company context can be added on top of the raw USCIS records?
 
-### 2. Configure environment
+The application exposes this through a unified experience:
 
-```bash
-cp backend/.env.example backend/.env
-# Edit backend/.env and add your OPENAI_API_KEY
+- A dashboard with national and state-level summaries
+- A company search and filtering interface
+- Individual company history pages with yearly trend analysis
+- State drill-down views with top employers and aggregated trends
+- A REST API mirroring the same data model used by the frontend
 
-# Optional, only if you protect the refresh endpoint with ADMIN_API_TOKEN
-cp frontend/.env.example frontend/.env
-```
+## Why It Matters
 
-### 3. Start both services
+The USCIS H-1B Employer Data Hub is authoritative, but it is still primarily a data release mechanism. VisaTrack Pro adds the missing application layer.
 
-```bash
-npm run dev
-```
+Its value comes from four areas:
 
-On first backend startup, VisaTrack Pro automatically downloads the USCIS H-1B CSV files, imports all supported years into SQLite, and replaces old demo-only data if it exists.
+- Converting annual CSV disclosures into an application-ready dataset
+- Preserving multi-year comparability in a queryable local database
+- Providing interactive search and drill-down exploration
+- Adding optional AI-based company context without altering the source-of-truth data
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:3001/api
+## How The System Works
 
-```bash
-npm run sync:data
-```
+VisaTrack Pro operates as a full-stack application backed by a local ingestion and sync pipeline.
 
-Use this if you want to trigger a full USCIS refresh manually from the command line.
+1. USCIS publishes yearly H-1B employer CSV exports.
+2. The backend downloads those files directly from the USCIS source.
+3. The importer normalizes USCIS schema variations across years.
+4. Parsed records are stored in SQLite.
+5. Express routes expose aggregated and entity-level data through JSON endpoints.
+6. The React frontend consumes those endpoints for maps, tables, charts, and status views.
+7. Optional AI enrichment attaches supplemental company metadata to employer records.
 
----
+The platform supports automatic first-run ingestion, annual scheduled sync, manual refresh, and refresh progress reporting.
 
-## GitHub Publishing
+## Architecture
 
-This repository is set up to be pushed to GitHub without committing secrets or generated data.
+VisaTrack Pro is intentionally simple in deployment shape while still covering the full data lifecycle.
 
-- Do not commit `backend/.env` or any frontend env files.
-- Do not commit SQLite databases or downloaded USCIS CSV cache files.
-- On a fresh clone, the app will download USCIS data automatically on first backend startup.
+### Frontend Layer
 
-Recommended publish flow:
+The frontend is a Vite-powered React application responsible for presentation, interaction, and view-level filtering.
 
-```bash
-npm run install:all
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-# add your local values
-git status
-```
+Responsibilities:
 
-Before pushing, confirm that only source files, docs, and lockfiles are staged.
+- Render state and company summaries
+- Provide table filtering, sorting, and pagination
+- Visualize trend data
+- Surface refresh status and data freshness
+- Document the API in-product
 
----
+### Backend Layer
 
-## Loading Real USCIS Data
+The backend is an Express service backed by SQLite. It manages ingestion, storage, aggregation, enrichment, and refresh workflows.
 
-Real USCIS data is now the default path.
+Responsibilities:
 
-- Automatic first run: if the database is empty, the backend downloads and imports all USCIS CSVs on startup.
-- Automatic annual refresh: a `node-cron` job runs on the schedule in `USCIS_SYNC_SCHEDULE`.
-- Manual CLI refresh: run `npm run sync:data`.
-- Manual API refresh: call `POST /api/admin/refresh`.
-- Manual UI refresh: use the Refresh Data panel on the home page.
+- Initialize and migrate schema
+- Download USCIS data files
+- Parse yearly CSV format differences safely
+- Deduplicate identical source rows while preserving valid multi-row employer data
+- Serve product-facing REST endpoints
+- Track sync runs and refresh progress
+- Run scheduled and manual refresh jobs
 
-If you still want to import a local CSV file manually:
+## Data Pipeline Design
 
-```bash
-node backend/scripts/importCSV.js path/to/H-1B_FY2023.csv 2023
-node backend/scripts/importCSV.js path/to/H-1B_FY2022.csv 2022
-```
+The data pipeline is one of the core engineering parts of the project.
 
-The importer auto-detects column names from USCIS CSV variants and upserts records safely, so re-running a year does not create duplicates.
+### USCIS Source Handling
 
----
+USCIS yearly exports are not perfectly uniform. Column names and formats vary across years, so the importer normalizes those differences into a stable internal representation before persistence.
+
+### Storage Model
+
+The database stores source-level rows rather than collapsing all employer-year records into a single row. This is important because some employers legitimately appear multiple times within the same fiscal year. The API aggregates those records when it returns company and state summaries.
+
+### Sync Model
+
+The sync process supports:
+
+- Automatic import when the database is empty
+- Scheduled yearly refresh using cron
+- Manual refresh from API or UI
+- Safe year-level replacement on rerun
+- Operational visibility through recorded sync-run metadata
+
+### Deduplication Strategy
+
+The system distinguishes between two valid metrics:
+
+- Raw CSV rows processed
+- Unique rows stored in the database
+
+This matters because USCIS files can contain identical duplicate rows. VisaTrack Pro keeps the processing count for observability while storing deduplicated records for analytical correctness.
+
+## API Perspective
+
+The backend exposes a focused REST surface shaped around product use cases rather than raw table access.
+
+Main endpoint groups:
+
+- `/api/companies` for employer search and company detail views
+- `/api/states` for map and state drill-down analytics
+- `/api/industries` for filter support
+- `/api/enrich` for enrichment workflows
+- `/api/health` for service and dataset status
+- `/api/admin/refresh` for refresh state and manual refresh triggers
+
+The API is designed for aggregated application use, so most responses are already grouped or summarized in ways the UI can render directly.
+
+## Technical Perspective
+
+From an engineering standpoint, the repository favors a pragmatic local architecture over unnecessary infrastructure.
+
+### SQLite As The Core Store
+
+SQLite is a strong fit because this dataset is structured, read-heavy, and batch-refreshed rather than continuously written. It gives the project a low-overhead persistence layer while still supporting fast aggregate queries.
+
+### Express As The Service Layer
+
+Express keeps the backend explicit and thin. Most of the project complexity lives in import logic, aggregation behavior, and refresh orchestration, not in framework abstractions.
+
+### React And Vite For The Client
+
+The frontend is interactive rather than static. React supports filter-heavy and drill-down-heavy UI well, while Vite keeps the development/build cycle fast and lightweight.
+
+### AI Enrichment As A Separate Concern
+
+USCIS data remains the authoritative source. AI-generated company metadata is layered on top as optional enrichment so the core analytics remain deterministic even without model output.
 
 ## Project Structure
 
-```
+```text
 VisaTrack Pro/
 ├── backend/
-│   ├── server.js           # Express app entry point (port 3001)
+│   ├── server.js
 │   ├── db/
-│   │   └── schema.js       # SQLite schema + getDb()
+│   │   └── schema.js
 │   ├── routes/
-│   │   ├── companies.js    # GET /api/companies, /api/companies/:name
-│   │   ├── states.js       # GET /api/states, /api/states/:code
-│   │   └── enrich.js       # GET /api/enrich/:name, POST /api/enrich/batch
+│   │   ├── admin.js
+│   │   ├── companies.js
+│   │   ├── enrich.js
+│   │   └── states.js
 │   ├── scripts/
-│   │   ├── importCSV.js    # USCIS CSV importer
-│   │   ├── seedDemo.js     # Optional demo data seeder
-│   │   └── syncUSCIS.js    # Full USCIS download + import runner
+│   │   ├── importCSV.js
+│   │   ├── seedDemo.js
+│   │   └── syncUSCIS.js
 │   ├── services/
-│   │   └── dataSync.js     # Scheduled/manual USCIS sync manager
-│   └── .env.example
+│   │   └── dataSync.js
+│   └── data/
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx          # Router + Navbar + Footer
+│   │   ├── components/
+│   │   ├── hooks/
 │   │   ├── pages/
-│   │   │   ├── HomePage.jsx     # Interactive US map + stats
-│   │   │   ├── CompaniesPage.jsx # Search/filter table
-│   │   │   ├── CompanyPage.jsx   # Company profile + trend chart
-│   │   │   ├── StatePage.jsx     # State drill-down
-│   │   │   └── ApiDocsPage.jsx   # REST API reference
-│   │   └── components/
-│   │       ├── USMap.jsx        # SVG choropleth map
-│   │       ├── TrendChart.jsx   # Recharts bar/line chart
-│   │       ├── SearchFilters.jsx # Search + filter bar
-│   │       └── Pagination.jsx   # Page navigation
-│   └── vite.config.js      # Proxies /api → :3001
-└── package.json            # Root scripts for both services
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   └── vite.config.js
+└── package.json
 ```
-
----
-
-## REST API
-
-All endpoints return JSON. See the in-app **API Docs** page at `/api-docs` for interactive documentation.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/companies` | List companies. Params: `state`, `year`, `search`, `page`, `limit`, `sort`, `order` |
-| GET | `/api/companies/:name` | Full H-1B history + enrichment for one company |
-| GET | `/api/states` | Aggregated stats for all states. Param: `year` |
-| GET | `/api/states/:code` | Stats + top employers + yearly trend for one state |
-| GET | `/api/enrich/:name` | Claude AI lookup: website + LinkedIn. Cached 30 days. |
-| POST | `/api/enrich/batch` | Enrich up to 10 companies. Body: `{ companies: [...] }` |
-| GET | `/api/health` | Health check — status, record count, available years |
-| GET | `/api/admin/refresh` | Current USCIS sync status and progress |
-| POST | `/api/admin/refresh` | Trigger a USCIS refresh run |
-
----
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Node.js, Express, better-sqlite3 |
-| AI Enrichment | OpenAI |
-| Frontend | React 18, React Router v6, Vite |
-| Charts | Recharts |
-| Database | SQLite (h1b.db) |
+| Frontend | React 18, React Router, Vite |
+| Visualization | Recharts, custom map UI |
+| Backend | Node.js, Express |
+| Database | SQLite via better-sqlite3 |
+| Parsing | csv-parse |
+| Scheduling | node-cron |
+| Enrichment | OpenAI |
 
----
+## Product Strengths
 
-## Environment Variables
+Some of the strongest aspects of the project are:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key for AI enrichment | Required |
-| `PORT` | Backend port | `3001` |
-| `FRONTEND_URL` | Allowed CORS origin | `http://localhost:5173` |
-| `DB_PATH` | Path to SQLite database file | `./h1b.db` |
-| `USCIS_SYNC_ON_STARTUP` | Auto-download/import USCIS data when DB is empty | `true` |
-| `USCIS_SYNC_SCHEDULE_ENABLED` | Enable annual scheduled refresh | `true` |
-| `USCIS_SYNC_SCHEDULE` | Cron expression for scheduled refresh | `0 5 15 1 *` |
-| `USCIS_SYNC_YEARS` | Optional comma-separated year whitelist | all supported years |
-| `ADMIN_API_TOKEN` | Optional token for POST `/api/admin/refresh` | unset |
-
----
+- Direct use of official USCIS source data
+- End-to-end ownership from ingestion through presentation
+- Low-overhead local architecture with strong analytical usefulness
+- Clear separation between authoritative data and enriched metadata
+- Built-in sync and refresh behavior instead of one-off import scripts
+- Usable both as a web product and as an application API
 
 ## Data Source
 
-H-1B petition data is sourced from the official [USCIS H-1B Employer Data Hub](https://www.uscis.gov/tools/reports-and-studies/h-1b-employer-data-hub). AI company enrichment is provided by OpenAI and cached for 30 days per company.
+H-1B employer petition data is sourced from the USCIS H-1B Employer Data Hub.
+
+AI enrichment, when enabled, adds supplemental company context on top of that source data and is treated as an enhancement rather than a replacement for official records.
