@@ -19,6 +19,9 @@ npm run install:all
 ```bash
 cp backend/.env.example backend/.env
 # Edit backend/.env and add your OPENAI_API_KEY
+
+# Optional, only if you protect the refresh endpoint with ADMIN_API_TOKEN
+cp frontend/.env.example frontend/.env
 ```
 
 ### 3. Start both services
@@ -37,6 +40,28 @@ npm run sync:data
 ```
 
 Use this if you want to trigger a full USCIS refresh manually from the command line.
+
+---
+
+## GitHub Publishing
+
+This repository is set up to be pushed to GitHub without committing secrets or generated data.
+
+- Do not commit `backend/.env` or any frontend env files.
+- Do not commit SQLite databases or downloaded USCIS CSV cache files.
+- On a fresh clone, the app will download USCIS data automatically on first backend startup.
+
+Recommended publish flow:
+
+```bash
+npm run install:all
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# add your local values
+git status
+```
+
+Before pushing, confirm that only source files, docs, and lockfiles are staged.
 
 ---
 
@@ -123,7 +148,7 @@ All endpoints return JSON. See the in-app **API Docs** page at `/api-docs` for i
 | Layer | Technology |
 |-------|-----------|
 | Backend | Node.js, Express, better-sqlite3 |
-| AI Enrichment | Anthropic Claude (claude-haiku-4-5) |
+| AI Enrichment | OpenAI |
 | Frontend | React 18, React Router v6, Vite |
 | Charts | Recharts |
 | Database | SQLite (h1b.db) |
@@ -148,4 +173,4 @@ All endpoints return JSON. See the in-app **API Docs** page at `/api-docs` for i
 
 ## Data Source
 
-H-1B petition data is sourced from the official [USCIS H-1B Employer Data Hub](https://www.uscis.gov/tools/reports-and-studies/h-1b-employer-data-hub). AI company enrichment is provided by Claude (Anthropic) and cached for 30 days per company.
+H-1B petition data is sourced from the official [USCIS H-1B Employer Data Hub](https://www.uscis.gov/tools/reports-and-studies/h-1b-employer-data-hub). AI company enrichment is provided by OpenAI and cached for 30 days per company.

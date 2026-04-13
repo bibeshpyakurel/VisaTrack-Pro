@@ -3,7 +3,12 @@ backend/node_modules/
 frontend/node_modules/
 backend/h1b.db
 backend/.env
+.env
+frontend/.env
+frontend/.env.local
 *.db
 .DS_Store
 dist/
 frontend/dist/
+backend/data/uscis/
+*.log
