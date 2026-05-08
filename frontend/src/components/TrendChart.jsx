@@ -4,6 +4,17 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 
+function getTooltipStyle() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return {
+    background: dark ? 'rgba(15,23,42,0.96)' : 'white',
+    border: `1px solid ${dark ? 'rgba(51,65,85,0.6)' : 'var(--gray-200)'}`,
+    borderRadius: '6px',
+    fontSize: '13px',
+    color: dark ? '#E2E8F0' : 'inherit',
+  };
+}
+
 export default function TrendChart({ data = [], title = 'Yearly H-1B Trend', mode = 'bar' }) {
   if (!data.length) {
     return <p style={{ color: 'var(--gray-400)', textAlign: 'center', padding: '2rem' }}>No trend data available.</p>;
@@ -28,12 +39,7 @@ export default function TrendChart({ data = [], title = 'Yearly H-1B Trend', mod
           <XAxis dataKey="year" tick={{ fontSize: 12, fill: 'var(--gray-500)' }} />
           <YAxis tick={{ fontSize: 12, fill: 'var(--gray-500)' }} />
           <Tooltip
-            contentStyle={{
-              background: 'white',
-              border: '1px solid var(--gray-200)',
-              borderRadius: '6px',
-              fontSize: '13px',
-            }}
+            contentStyle={getTooltipStyle()}
             formatter={(value, name) => [value.toLocaleString(), name === 'total_approvals' ? 'Approvals' : name === 'total_denials' ? 'Denials' : name]}
           />
           <Legend

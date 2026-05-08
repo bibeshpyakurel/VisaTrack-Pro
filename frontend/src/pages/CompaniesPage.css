@@ -136,3 +136,29 @@
   .search-filters { gap: 0.5rem; }
   .filter-group select { max-width: 140px; font-size: 0.82rem; }
 }
+
+/* ── Dark mode overrides ── */
+[data-theme="dark"] .companies-header {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 28%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(10, 20, 42, 0.9));
+  border-color: rgba(37, 99, 235, 0.1);
+}
+
+[data-theme="dark"] .search-filters {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(51, 65, 85, 0.4);
+}
+
+[data-theme="dark"] .search-input {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+[data-theme="dark"] .filter-group select {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+[data-theme="dark"] .enrich-msg {
+  color: #93C5FD;
+  border-color: rgba(37, 99, 235, 0.2);
+}

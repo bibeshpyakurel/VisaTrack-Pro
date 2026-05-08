@@ -127,3 +127,35 @@
   padding: 0.1rem 0.35rem;
   border-radius: 3px;
 }
+
+/* ── Dark mode overrides ── */
+[data-theme="dark"] .health-banner {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(15, 118, 110, 0.1));
+  border-color: rgba(37, 99, 235, 0.15);
+}
+
+[data-theme="dark"] .endpoint-card {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.1), transparent 26%),
+    rgba(15, 23, 42, 0.85);
+}
+
+[data-theme="dark"] .endpoint-path {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(51, 65, 85, 0.6);
+  color: var(--gray-700);
+}
+
+[data-theme="dark"] .params-table th {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+[data-theme="dark"] .params-table td code,
+[data-theme="dark"] .rate-limit-note code {
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--gray-700);
+}
+
+[data-theme="dark"] .response-note {
+  border-top-color: rgba(51, 65, 85, 0.5);
+}

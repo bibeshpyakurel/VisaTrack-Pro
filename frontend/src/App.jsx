@@ -18,7 +18,7 @@ function PageLoader() {
   );
 }
 
-function Navbar() {
+function Navbar({ theme, toggleTheme }) {
   return (
     <header className="navbar">
       <div className="container navbar-inner">
@@ -29,11 +29,21 @@ function Navbar() {
           </svg>
           <span>VisaTrack <strong>Pro</strong></span>
         </Link>
-        <nav className="nav-links">
-          <NavLink to="/" end>Map</NavLink>
-          <NavLink to="/companies">Companies</NavLink>
-          <NavLink to="/api-docs">API</NavLink>
-        </nav>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <nav className="nav-links">
+            <NavLink to="/" end>Map</NavLink>
+            <NavLink to="/companies">Companies</NavLink>
+<NavLink to="/api-docs">API</NavLink>
+          </nav>
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        </div>
       </div>
     </header>
   );
@@ -71,18 +81,32 @@ function Footer() {
 }
 
 export default function App() {
+  // Default to dark mode; persist preference in localStorage
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('vtp-theme') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('vtp-theme', theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme(t => t === 'dark' ? 'light' : 'dark');
+  }
+
   return (
     <BrowserRouter>
-      <Navbar />
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
       <main className="main-content">
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
-              <Route path="/"           element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
-              <Route path="/companies"  element={<ErrorBoundary><CompaniesPage /></ErrorBoundary>} />
+              <Route path="/"              element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+              <Route path="/companies"     element={<ErrorBoundary><CompaniesPage /></ErrorBoundary>} />
               <Route path="/company/:name" element={<ErrorBoundary><CompanyPage /></ErrorBoundary>} />
               <Route path="/state/:code"   element={<ErrorBoundary><StatePage /></ErrorBoundary>} />
-              <Route path="/api-docs"      element={<ErrorBoundary><ApiDocsPage /></ErrorBoundary>} />
+<Route path="/api-docs"      element={<ErrorBoundary><ApiDocsPage /></ErrorBoundary>} />
             </Routes>
           </Suspense>
         </ErrorBoundary>

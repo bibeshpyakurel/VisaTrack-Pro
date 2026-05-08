@@ -15,6 +15,86 @@
 .breadcrumb a { color: var(--blue-600); }
 .breadcrumb span:last-child { color: var(--gray-700); font-weight: 500; }
 
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gray-800);
+  margin-bottom: 1.1rem;
+}
+
+.industries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.industry-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.industry-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.industry-rank {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray-400);
+  width: 18px;
+  flex-shrink: 0;
+}
+
+.industry-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.industry-employers {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  flex-shrink: 0;
+}
+
+.industry-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-left: 1.4rem;
+}
+
+.industry-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue-600), #0f766e);
+  min-width: 4px;
+  transition: width 0.4s ease;
+}
+
+.industry-approvals {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  flex-shrink: 0;
+}
+
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+}
+.sortable-th:hover {
+  color: var(--blue-600);
+}
+
 .top-employers-header {
   display: flex;
   align-items: center;

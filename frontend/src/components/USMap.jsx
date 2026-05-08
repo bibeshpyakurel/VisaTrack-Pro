@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ComposableMap,
   Geographies,
   Geography,
-  Annotation,
-  ZoomableGroup,
 } from 'react-simple-maps';
 import './USMap.css';
 
-// Real US state boundaries via US Atlas topojson
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json';
 
-// FIPS code → state abbreviation
 const FIPS_TO_STATE = {
   '01': 'AL', '02': 'AK', '04': 'AZ', '05': 'AR', '06': 'CA',
   '08': 'CO', '09': 'CT', '10': 'DE', '11': 'DC', '12': 'FL',
@@ -41,24 +37,34 @@ const STATE_NAMES = {
   WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
 };
 
-// Quantile-based color scale — 5 buckets from light to dark blue
-function getColor(value, thresholds) {
+function computeThresholds(values) {
+  const vals = values.filter(v => v > 0).sort((a, b) => a - b);
+  if (!vals.length) return [0, 0, 0, 0];
+  const q = (p) => vals[Math.floor(p * vals.length)] || 0;
+  return [q(0.2), q(0.4), q(0.6), q(0.8)];
+}
+
+// Blue scale — approvals
+function getApprovalColor(value, thresholds) {
   if (!value) return '#E8EFF8';
-  if (value >= thresholds[3]) return '#1D4ED8'; // top 20%
+  if (value >= thresholds[3]) return '#1D4ED8';
   if (value >= thresholds[2]) return '#2563EB';
   if (value >= thresholds[1]) return '#3B82F6';
   if (value >= thresholds[0]) return '#93C5FD';
   return '#DBEAFE';
 }
 
-function computeThresholds(stateData) {
-  const vals = stateData.map(s => s.total_approvals || 0).filter(v => v > 0).sort((a, b) => a - b);
-  if (!vals.length) return [0, 0, 0, 0];
-  const q = (p) => vals[Math.floor(p * vals.length)] || 0;
-  return [q(0.2), q(0.4), q(0.6), q(0.8)];
+// Green scale — salary
+function getSalaryColor(value, thresholds) {
+  if (!value) return '#E8F5E9';
+  if (value >= thresholds[3]) return '#15803D';
+  if (value >= thresholds[2]) return '#16A34A';
+  if (value >= thresholds[1]) return '#4ADE80';
+  if (value >= thresholds[0]) return '#86EFAC';
+  return '#DCFCE7';
 }
 
-const LEGEND_ITEMS = [
+const APPROVAL_LEGEND = [
   { color: '#E8EFF8', label: 'No data' },
   { color: '#DBEAFE', label: 'Low' },
   { color: '#93C5FD', label: '' },
@@ -67,26 +73,57 @@ const LEGEND_ITEMS = [
   { color: '#1D4ED8', label: 'Top 20%' },
 ];
 
-export default function USMap({ stateData = [] }) {
+const SALARY_LEGEND = [
+  { color: '#E8F5E9', label: 'No data' },
+  { color: '#DCFCE7', label: 'Low' },
+  { color: '#86EFAC', label: '' },
+  { color: '#4ADE80', label: '' },
+  { color: '#16A34A', label: 'High' },
+  { color: '#15803D', label: 'Top 20%' },
+];
+
+function fmtWage(n) {
+  if (!n) return '—';
+  return `$${Math.round(n / 1000)}k`;
+}
+
+export default function USMap({ stateData = [], salaryData = [], mode = 'approvals' }) {
   const navigate = useNavigate();
   const [tooltip, setTooltip] = useState(null);
   const [hoveredState, setHoveredState] = useState(null);
+  const [kbState, setKbState] = useState(null);
+  const wrapperRef = useRef(null);
 
-  const dataByState = Object.fromEntries(stateData.map(s => [s.state, s]));
-  const thresholds = computeThresholds(stateData);
+  const stateOrder = stateData.length
+    ? stateData.map(s => s.state).filter(Boolean)
+    : Object.values(FIPS_TO_STATE).filter(c => c !== 'PR');
+
+  function handleWrapperKeyDown(e) {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) return;
+    e.preventDefault();
+    if (e.key === 'Escape') { setKbState(null); return; }
+    if (e.key === 'Enter' && kbState) { navigate(`/state/${kbState}`); return; }
+    const idx = kbState ? stateOrder.indexOf(kbState) : -1;
+    const next = (e.key === 'ArrowRight' || e.key === 'ArrowDown')
+      ? stateOrder[(idx + 1) % stateOrder.length]
+      : stateOrder[(idx - 1 + stateOrder.length) % stateOrder.length];
+    setKbState(next);
+  }
+
+  const dataByState   = Object.fromEntries(stateData.map(s => [s.state, s]));
+  const salaryByState = Object.fromEntries(salaryData.map(s => [s.state, s]));
+
+  const approvalThresholds = computeThresholds(stateData.map(s => s.total_approvals || 0));
+  const salaryThresholds   = computeThresholds(salaryData.map(s => s.avg_wage || 0));
 
   const totalApprovals = stateData.reduce((s, d) => s + (d.total_approvals || 0), 0);
 
-  const TOOLTIP_W = 200;
-  const TOOLTIP_H = 185;
+  const TOOLTIP_W = 210;
+  const TOOLTIP_H = 200;
 
   function clampTooltip(clientX, clientY) {
-    const x = clientX + 16 + TOOLTIP_W > window.innerWidth
-      ? clientX - TOOLTIP_W - 12
-      : clientX + 16;
-    const y = clientY - 16 + TOOLTIP_H > window.innerHeight
-      ? clientY - TOOLTIP_H
-      : clientY - 16;
+    const x = clientX + 16 + TOOLTIP_W > window.innerWidth ? clientX - TOOLTIP_W - 12 : clientX + 16;
+    const y = clientY - 16 + TOOLTIP_H > window.innerHeight ? clientY - TOOLTIP_H : clientY - 16;
     return { x, y };
   }
 
@@ -94,19 +131,22 @@ export default function USMap({ stateData = [] }) {
     const fips = geo.id?.toString().padStart(2, '0');
     const code = FIPS_TO_STATE[fips];
     if (!code) return;
-    const data = dataByState[code];
-    const rate = data && (data.total_approvals + data.total_denials) > 0
-      ? Math.round(data.total_approvals / (data.total_approvals + data.total_denials) * 100)
+    const d  = dataByState[code];
+    const sd = salaryByState[code];
+    const rate = d && (d.total_approvals + d.total_denials) > 0
+      ? Math.round(d.total_approvals / (d.total_approvals + d.total_denials) * 100)
       : null;
     setHoveredState(code);
     setTooltip({
       code,
       name: STATE_NAMES[code] || code,
-      approvals: data?.total_approvals || 0,
-      denials: data?.total_denials || 0,
-      employers: data?.employer_count || 0,
+      approvals:  d?.total_approvals  || 0,
+      denials:    d?.total_denials    || 0,
+      employers:  d?.employer_count   || 0,
       rate,
-      pct: totalApprovals > 0 ? ((data?.total_approvals || 0) / totalApprovals * 100).toFixed(1) : '0',
+      pct: totalApprovals > 0 ? ((d?.total_approvals || 0) / totalApprovals * 100).toFixed(1) : '0',
+      avg_wage:   sd?.avg_wage   || null,
+      petitions:  sd?.petitions  || 0,
       ...clampTooltip(e.clientX, e.clientY),
     });
   }
@@ -126,8 +166,24 @@ export default function USMap({ stateData = [] }) {
     if (code) navigate(`/state/${code}`);
   }
 
+  const legend = mode === 'salary' ? SALARY_LEGEND : APPROVAL_LEGEND;
+  const legendTitle = mode === 'salary' ? 'Avg. Offered Wage' : 'H-1B Approvals';
+
   return (
-    <div className="us-map-wrapper">
+    <div
+      className="us-map-wrapper"
+      ref={wrapperRef}
+      tabIndex={0}
+      onKeyDown={handleWrapperKeyDown}
+      aria-label="US Map — use arrow keys to navigate states, Enter to drill in"
+    >
+      {kbState && (
+        <div className="kb-state-indicator">
+          <strong>{STATE_NAMES[kbState] || kbState}</strong>
+          <span> · {(dataByState[kbState]?.total_approvals || 0).toLocaleString()} approvals · Press Enter to explore</span>
+        </div>
+      )}
+
       <ComposableMap
         projection="geoAlbersUsa"
         projectionConfig={{ scale: 1000 }}
@@ -139,20 +195,24 @@ export default function USMap({ stateData = [] }) {
             geographies.map(geo => {
               const fips = geo.id?.toString().padStart(2, '0');
               const code = FIPS_TO_STATE[fips];
-              const data = dataByState[code];
-              const fill = getColor(data?.total_approvals, thresholds);
-              const isHovered = hoveredState === code;
+              const d  = dataByState[code];
+              const sd = salaryByState[code];
+              const fill = mode === 'salary'
+                ? getSalaryColor(sd?.avg_wage, salaryThresholds)
+                : getApprovalColor(d?.total_approvals, approvalThresholds);
+              const isHovered   = hoveredState === code;
+              const isKbFocused = kbState === code;
 
               return (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  fill={isHovered ? '#1E40AF' : fill}
+                  fill={isKbFocused ? '#7C3AED' : isHovered ? (mode === 'salary' ? '#065F46' : '#1E40AF') : fill}
                   stroke="#FFFFFF"
                   strokeWidth={isHovered ? 2 : 0.8}
                   style={{
                     default: { outline: 'none', cursor: 'pointer', transition: 'fill 0.15s' },
-                    hover: { outline: 'none', cursor: 'pointer' },
+                    hover:   { outline: 'none', cursor: 'pointer' },
                     pressed: { outline: 'none' },
                   }}
                   onClick={() => handleClick(geo)}
@@ -163,7 +223,7 @@ export default function USMap({ stateData = [] }) {
                   onFocus={e => handleMouseEnter(geo, e)}
                   onBlur={handleMouseLeave}
                   onKeyDown={e => e.key === 'Enter' && handleClick(geo)}
-                  aria-label={`${STATE_NAMES[code] || code}: ${(data?.total_approvals || 0).toLocaleString()} approvals`}
+                  aria-label={`${STATE_NAMES[code] || code}: ${(d?.total_approvals || 0).toLocaleString()} approvals`}
                 />
               );
             })
@@ -171,51 +231,75 @@ export default function USMap({ stateData = [] }) {
         </Geographies>
       </ComposableMap>
 
-      {/* Floating tooltip */}
+      {/* Tooltip */}
       {tooltip && (
-        <div
-          className="map-tooltip"
-          style={{
-            left: tooltip.x + 16,
-            top: tooltip.y - 16,
-          }}
-        >
+        <div className="map-tooltip" style={{ left: tooltip.x + 16, top: tooltip.y - 16 }}>
           <div className="tooltip-header">
             <span className="tooltip-state-name">{tooltip.name}</span>
             <span className="tooltip-state-code">{tooltip.code}</span>
           </div>
           <div className="tooltip-divider" />
-          <div className="tooltip-row">
-            <span>Approvals</span>
-            <strong className="tooltip-green">{tooltip.approvals.toLocaleString()}</strong>
-          </div>
-          <div className="tooltip-row">
-            <span>Denials</span>
-            <strong className="tooltip-red">{tooltip.denials.toLocaleString()}</strong>
-          </div>
-          {tooltip.rate !== null && (
-            <div className="tooltip-row">
-              <span>Approval rate</span>
-              <strong>{tooltip.rate}%</strong>
-            </div>
+          {mode === 'salary' ? (
+            <>
+              <div className="tooltip-row">
+                <span>Avg. Offered Wage</span>
+                <strong style={{ color: '#16A34A' }}>{fmtWage(tooltip.avg_wage)}</strong>
+              </div>
+              <div className="tooltip-row">
+                <span>LCA Petitions</span>
+                <strong>{tooltip.petitions.toLocaleString()}</strong>
+              </div>
+              <div className="tooltip-divider" />
+              <div className="tooltip-row">
+                <span>USCIS Approvals</span>
+                <strong className="tooltip-green">{tooltip.approvals.toLocaleString()}</strong>
+              </div>
+              <div className="tooltip-row">
+                <span>Employers</span>
+                <strong>{tooltip.employers.toLocaleString()}</strong>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="tooltip-row">
+                <span>Approvals</span>
+                <strong className="tooltip-green">{tooltip.approvals.toLocaleString()}</strong>
+              </div>
+              <div className="tooltip-row">
+                <span>Denials</span>
+                <strong className="tooltip-red">{tooltip.denials.toLocaleString()}</strong>
+              </div>
+              {tooltip.rate !== null && (
+                <div className="tooltip-row">
+                  <span>Approval rate</span>
+                  <strong>{tooltip.rate}%</strong>
+                </div>
+              )}
+              <div className="tooltip-row">
+                <span>Employers</span>
+                <strong>{tooltip.employers.toLocaleString()}</strong>
+              </div>
+              <div className="tooltip-row">
+                <span>Share of total</span>
+                <strong>{tooltip.pct}%</strong>
+              </div>
+              {tooltip.avg_wage && (
+                <div className="tooltip-row">
+                  <span>Avg. Wage (LCA)</span>
+                  <strong style={{ color: '#16A34A' }}>{fmtWage(tooltip.avg_wage)}</strong>
+                </div>
+              )}
+            </>
           )}
-          <div className="tooltip-row">
-            <span>Employers</span>
-            <strong>{tooltip.employers.toLocaleString()}</strong>
-          </div>
-          <div className="tooltip-row">
-            <span>Share of total</span>
-            <strong>{tooltip.pct}%</strong>
-          </div>
           <div className="tooltip-cta">Click to explore →</div>
         </div>
       )}
 
       {/* Legend */}
       <div className="map-legend">
-        <span className="legend-title">H-1B Approvals</span>
+        <span className="legend-title">{legendTitle}</span>
         <div className="legend-swatches">
-          {LEGEND_ITEMS.map(item => (
+          {legend.map(item => (
             <div key={item.color} className="legend-item">
               <div className="legend-swatch" style={{ background: item.color }} />
               {item.label && <span>{item.label}</span>}

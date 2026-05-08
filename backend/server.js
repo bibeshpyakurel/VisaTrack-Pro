@@ -4,11 +4,13 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const { getDb } = require('./db/schema');
 const { getSyncStatus, initializeScheduledSync, initializeStartupSync } = require('./services/dataSync');
+const { initializeLcaScheduledSync } = require('./services/lcaSync');
 
 const companiesRouter = require('./routes/companies');
 const statesRouter = require('./routes/states');
 const enrichRouter = require('./routes/enrich');
 const adminRouter = require('./routes/admin');
+const lcaRouter = require('./routes/lca');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,6 +51,7 @@ app.use('/api/companies', companiesRouter);
 app.use('/api/states', statesRouter);
 app.use('/api/enrich', enrichLimiter, enrichRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/lca', lcaRouter);
 
 // GET /api/industries — distinct NAICS industry descriptions for filter dropdown
 app.get('/api/industries', (req, res) => {
@@ -116,6 +119,7 @@ app.get('/api', (req, res) => {
 app.listen(PORT, () => {
   initializeScheduledSync();
   initializeStartupSync();
+  initializeLcaScheduledSync();
   console.log(`VisaTrack Pro backend running on http://localhost:${PORT}`);
   console.log(`API docs: http://localhost:${PORT}/api`);
 });

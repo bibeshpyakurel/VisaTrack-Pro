@@ -178,6 +178,9 @@ async function runSync({
         syncRunId: currentRun.id,
       });
 
+      // Remove CSV after import to save disk space
+      fs.unlink(destinationPath, () => {});
+
       updateRunState({
         files_imported: currentRun.files_imported + 1,
         records_imported: currentRun.records_imported + result.recordsImported,

@@ -38,8 +38,11 @@ router.get('/', (req, res) => {
     params.push(parseInt(year));
   }
   if (search) {
-    conditions.push('r.employer_name LIKE ?');
-    params.push(`%${search}%`);
+    // Use FTS5 prefix search for employer name (fast), LIKE for city (substring)
+    const ftsQuery = search.trim().split(/\s+/).filter(Boolean)
+      .map(t => `"${t.replace(/"/g, '')}"*`).join(' ');
+    conditions.push(`(r.employer_name IN (SELECT employer_name FROM employer_fts WHERE employer_fts MATCH ?) OR r.city LIKE ?)`);
+    params.push(ftsQuery, `%${search}%`);
   }
   if (industry) {
     conditions.push('r.naics_description = ?');
@@ -139,12 +142,32 @@ router.get('/:name', (req, res) => {
     { total_approvals: 0, total_denials: 0 }
   );
 
+  // Find similar companies: same industry + state, ordered by approvals
+  const naics = history.find(r => r.naics_description)?.naics_description || null;
+  const state = history.find(r => r.state)?.state || null;
+  const similar = naics && state
+    ? db.prepare(`
+        SELECT
+          r.employer_name,
+          MAX(r.state) AS state,
+          CASE WHEN COUNT(DISTINCT r.city) = 1 THEN MAX(r.city) ELSE NULL END AS city,
+          MAX(r.naics_description) AS naics_description,
+          SUM(r.initial_approvals + r.continuing_approvals) AS total_approvals
+        FROM h1b_records r
+        WHERE r.naics_description = ? AND r.state = ? AND r.employer_name != ?
+        GROUP BY r.employer_name
+        ORDER BY total_approvals DESC
+        LIMIT 5
+      `).all(naics, state, name)
+    : [];
+
   res.json({
     employer_name: name,
     ...totals,
     years_active: history.length,
     enrichment: enrichment || null,
     history,
+    similar,
   });
 });
 

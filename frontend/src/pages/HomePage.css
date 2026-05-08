@@ -273,6 +273,29 @@
   border-radius: 12px;
 }
 
+.national-trend-card {
+  padding: 1.5rem;
+}
+
+.chart-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.chart-header-row h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gray-800);
+}
+.chart-header-row p {
+  color: var(--gray-500);
+  font-size: 0.875rem;
+  margin-top: 0.2rem;
+}
+
 .map-header {
   display: flex;
   align-items: center;
@@ -282,6 +305,25 @@
   gap: 0.75rem;
 }
 .map-header h2 { font-size: 1.15rem; font-weight: 700; color: var(--gray-800); }
+
+.map-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.map-mode-toggle {
+  display: flex;
+  gap: 0.3rem;
+}
+.map-mode-toggle .btn {
+  padding: 0.28rem 0.7rem;
+  font-size: 0.8rem;
+}
+.map-salary-note {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+}
 
 .year-filter {
   display: flex;
@@ -319,6 +361,67 @@
   .refresh-overview-pill-group { width: 100%; }
   .refresh-pill { flex: 1 1 100%; }
   .refresh-metrics { grid-template-columns: 1fr; }
+}
+
+/* ── Dark mode overrides ── */
+[data-theme="dark"] .home-hero {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(10, 20, 42, 0.88));
+  border-color: rgba(37, 99, 235, 0.15);
+}
+
+[data-theme="dark"] .refresh-card {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 15, 30, 0.9) 100%);
+  border-color: rgba(37, 99, 235, 0.1);
+}
+[data-theme="dark"] .refresh-card-success {
+  background:
+    radial-gradient(circle at top right, rgba(22, 163, 74, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 20, 15, 0.9) 100%);
+}
+[data-theme="dark"] .refresh-card-active {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 15, 35, 0.9) 100%);
+}
+[data-theme="dark"] .refresh-card-danger {
+  background:
+    radial-gradient(circle at top right, rgba(220, 38, 38, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(20, 10, 10, 0.9) 100%);
+}
+
+[data-theme="dark"] .refresh-pill {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(51, 65, 85, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .refresh-metric-tile {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(51, 65, 85, 0.6);
+}
+[data-theme="dark"] .refresh-metric-highlight {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(15, 118, 110, 0.1));
+  border-color: rgba(37, 99, 235, 0.15);
+}
+
+[data-theme="dark"] .year-filter select {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(51, 65, 85, 0.6);
+}
+
+[data-theme="dark"] .top-states-card {
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.1), transparent 24%),
+    rgba(15, 23, 42, 0.85);
+}
+[data-theme="dark"] .about-card {
+  background:
+    radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.12), transparent 28%),
+    rgba(15, 23, 42, 0.85);
 }
 
 .top-states-card h2,

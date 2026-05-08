@@ -12,3 +12,4 @@ dist/
 frontend/dist/
 backend/data/uscis/
 *.log
+backend/data/lca/

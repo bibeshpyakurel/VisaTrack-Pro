@@ -87,3 +87,284 @@
   padding: 0.3rem 0.75rem;
   font-size: 0.85rem;
 }
+
+.linkedin-btn {
+  background: linear-gradient(135deg, rgba(10, 102, 194, 0.1), rgba(10, 102, 194, 0.06));
+  border-color: rgba(10, 102, 194, 0.25);
+  color: #0a66c2;
+}
+.linkedin-btn:hover {
+  background: rgba(10, 102, 194, 0.15);
+}
+
+@media print {
+  .navbar, .footer, .breadcrumb, .no-print,
+  .chart-mode-toggle, .similar-list, .similar-item { display: none !important; }
+  body { background: white !important; }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    backdrop-filter: none !important;
+    break-inside: avoid;
+  }
+  .stat-card { break-inside: avoid; }
+  .company-page { gap: 0.75rem; }
+}
+
+.section-card-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gray-800);
+  margin-bottom: 0.2rem;
+}
+
+.section-card-sub {
+  font-size: 0.82rem;
+  color: var(--gray-400);
+  margin-bottom: 0.85rem;
+}
+
+.similar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.similar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+  border: 1px solid var(--border-soft);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+  gap: 1rem;
+}
+.similar-item:hover {
+  background: var(--blue-50);
+  border-color: rgba(37, 99, 235, 0.18);
+  text-decoration: none;
+}
+
+.similar-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--blue-600);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.similar-meta {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  flex-shrink: 0;
+}
+
+/* ── LCA Salary Card ── */
+.lca-card {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 28%),
+    var(--surface);
+}
+
+.lca-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.lca-wage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.lca-wage-tile {
+  background: var(--gray-50);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+}
+.lca-wage-tile span {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+.lca-wage-tile strong {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--gray-900);
+}
+.lca-wage-primary {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(15, 118, 110, 0.06));
+  border-color: rgba(37, 99, 235, 0.14);
+}
+.lca-wage-primary strong { color: var(--blue-600); }
+
+.lca-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-500);
+  margin-bottom: 0.65rem;
+}
+
+.lca-yearly { margin-bottom: 1.25rem; }
+
+.lca-year-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.lca-year-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.lca-year-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  width: 50px;
+  flex-shrink: 0;
+}
+.lca-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--gray-100);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.lca-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue-600), #0f766e);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.lca-year-value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.lca-year-count {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.lca-bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+@media (max-width: 600px) {
+  .lca-bottom-row { grid-template-columns: 1fr; }
+  .lca-wage-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.lca-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.lca-tag {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-100);
+  color: var(--blue-700);
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.lca-tag em {
+  font-style: normal;
+  font-weight: 700;
+  margin-left: 0.3rem;
+  opacity: 0.7;
+}
+
+.lca-levels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.lca-level-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.lca-level-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray-600);
+  width: 54px;
+  flex-shrink: 0;
+}
+.lca-level-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--gray-100);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.lca-level-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7C3AED, #2563EB);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+.lca-level-count {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Dark mode overrides ── */
+[data-theme="dark"] .lca-wage-tile {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(51, 65, 85, 0.5);
+}
+[data-theme="dark"] .lca-wage-primary {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(15, 118, 110, 0.1));
+  border-color: rgba(37, 99, 235, 0.2);
+}
+[data-theme="dark"] .lca-bar-track,
+[data-theme="dark"] .lca-level-bar-track { background: rgba(51, 65, 85, 0.5); }
+[data-theme="dark"] .lca-tag {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.2);
+  color: #93C5FD;
+}
+
+[data-theme="dark"] .similar-item {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(51, 65, 85, 0.5);
+}
+[data-theme="dark"] .similar-item:hover {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+[data-theme="dark"] .company-header {
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 30%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(10, 20, 42, 0.88));
+}

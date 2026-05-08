@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import USMap from '../components/USMap.jsx';
+import TrendChart from '../components/TrendChart.jsx';
 import './HomePage.css';
 
 const adminToken = import.meta.env.VITE_ADMIN_TOKEN;
@@ -13,10 +14,15 @@ function getSyncTone(status) {
 }
 
 export default function HomePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const year = searchParams.get('year') || '';
+
   const [stateData, setStateData] = useState([]);
+  const [salaryData, setSalaryData] = useState([]);
+  const [mapMode, setMapMode] = useState('approvals');
   const [summary, setSummary] = useState(null);
   const [syncStatus, setSyncStatus] = useState(null);
-  const [year, setYear] = useState('');
+  const [nationalTrend, setNationalTrend] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMessage, setRefreshMessage] = useState('');
@@ -29,16 +35,20 @@ export default function HomePage() {
       try {
         setLoading(true);
         const url = year ? `/api/states?year=${year}` : '/api/states';
-        const [statesRes, healthRes, syncRes] = await Promise.all([
+        const [statesRes, healthRes, syncRes, trendRes, salaryRes] = await Promise.all([
           fetch(url),
           fetch('/api/health'),
           fetch('/api/admin/refresh'),
+          fetch('/api/states/national-trend'),
+          fetch('/api/lca/by-state'),
         ]);
 
-        const [statesJson, healthJson, syncJson] = await Promise.all([
+        const [statesJson, healthJson, syncJson, trendJson, salaryJson] = await Promise.all([
           statesRes.json(),
           healthRes.json(),
           syncRes.json(),
+          trendRes.json(),
+          salaryRes.json(),
         ]);
 
         if (cancelled) {
@@ -48,6 +58,8 @@ export default function HomePage() {
         setStateData(statesJson.data || []);
         setSummary(healthJson);
         setSyncStatus(syncJson.data || null);
+        setNationalTrend(trendJson.data || []);
+        setSalaryData(salaryJson.data || []);
         setError(null);
       } catch (err) {
         if (!cancelled) {
@@ -244,20 +256,37 @@ export default function HomePage() {
 
       <div className="card map-card">
         <div className="map-header">
-          <h2>H-1B Approvals by State</h2>
-          <div className="year-filter">
-            <label htmlFor="year-select">Year:</label>
-            <select
-              id="year-select"
-              value={year}
-              onChange={e => setYear(e.target.value)}
-            >
-              <option value="">All Years</option>
-              {(summary?.years_available || []).map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+          <div className="map-header-left">
+            <h2>{mapMode === 'salary' ? 'Avg. H-1B Salary by State' : 'H-1B Approvals by State'}</h2>
+            <div className="map-mode-toggle">
+              <button
+                className={`btn ${mapMode === 'approvals' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setMapMode('approvals')}
+              >Approvals</button>
+              <button
+                className={`btn ${mapMode === 'salary' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setMapMode('salary')}
+              >Avg Salary</button>
+            </div>
           </div>
+          {mapMode === 'approvals' && (
+            <div className="year-filter">
+              <label htmlFor="year-select">Year:</label>
+              <select
+                id="year-select"
+                value={year}
+                onChange={e => setSearchParams(e.target.value ? { year: e.target.value } : {})}
+              >
+                <option value="">All Years</option>
+                {(summary?.years_available || []).map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {mapMode === 'salary' && (
+            <span className="map-salary-note">Source: DOL LCA FY2023–2025</span>
+          )}
         </div>
 
         {loading ? (
@@ -265,9 +294,21 @@ export default function HomePage() {
         ) : error ? (
           <div className="error-box">Failed to load map data: {error}</div>
         ) : (
-          <USMap stateData={stateData} year={year} />
+          <USMap stateData={stateData} salaryData={salaryData} mode={mapMode} />
         )}
       </div>
+
+      {nationalTrend.length > 0 && (
+        <div className="card national-trend-card">
+          <div className="chart-header-row">
+            <div>
+              <h2>National H-1B Trends</h2>
+              <p>Total approvals and denials across all employers, all states</p>
+            </div>
+          </div>
+          <TrendChart data={nationalTrend} mode="bar" title="" />
+        </div>
+      )}
 
       <div className="home-bottom">
         <div className="card top-states-card">

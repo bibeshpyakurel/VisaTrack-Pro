@@ -91,6 +91,31 @@
   text-align: right;
 }
 
+/* Keyboard navigation indicator */
+.kb-state-indicator {
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.82rem;
+  color: #7C3AED;
+  margin-bottom: 0.5rem;
+}
+.kb-state-indicator strong { font-weight: 700; }
+
+[data-theme="dark"] .kb-state-indicator {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: #A78BFA;
+}
+
+.us-map-wrapper:focus {
+  outline: 2px solid rgba(124, 58, 237, 0.4);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.us-map-wrapper:focus:not(:focus-visible) { outline: none; }
+
 /* Legend */
 .map-legend {
   display: flex;
@@ -127,4 +152,15 @@
   height: 12px;
   border-radius: 3px;
   border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* ── Dark mode overrides ── */
+[data-theme="dark"] .us-map-svg {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+[data-theme="dark"] .map-tooltip {
+  background: rgba(15, 23, 42, 0.96);
+  border-color: rgba(51, 65, 85, 0.6);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.35);
 }
