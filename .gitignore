@@ -13,3 +13,9 @@ frontend/dist/
 backend/data/uscis/
 *.log
 backend/data/lca/
+
+# SQLite write-ahead-log sidecars: transient engine state, never source.
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
