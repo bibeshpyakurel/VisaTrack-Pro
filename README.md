@@ -1,8 +1,52 @@
 # VisaTrack Pro
 
-VisaTrack Pro is an H-1B employer intelligence platform built on top of official USCIS employer disclosure data. It transforms yearly USCIS CSV releases into a searchable product with company profiles, state-level analytics, trend views, enrichment workflows, and a REST API.
+An H-1B employer intelligence platform built on official USCIS disclosure data — it turns
+the yearly CSV releases into a searchable application with company profiles, state
+analytics, multi-year trends, and a REST API, for job seekers and researchers who need to
+know which employers actually sponsor.
 
-The project is designed to make H-1B employer data easier to explore, compare, and operationalize than the raw USCIS download experience allows on its own.
+[![CodeQL](https://github.com/bibeshpyakurel/VisaTrack-Pro/actions/workflows/codeql.yml/badge.svg)](https://github.com/bibeshpyakurel/VisaTrack-Pro/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/github/license/bibeshpyakurel/VisaTrack-Pro)](LICENSE)
+[![Top language](https://img.shields.io/github/languages/top/bibeshpyakurel/VisaTrack-Pro)](https://github.com/bibeshpyakurel/VisaTrack-Pro)
+
+There is no hosted demo — VisaTrack Pro ingests the USCIS dataset into a local SQLite
+database, so it runs on your machine. [Quick start](#quick-start) takes three commands.
+
+## Screenshots
+
+> **Not yet captured.** These are the shots that would explain VisaTrack Pro fastest.
+> Drop each file at the path shown and uncomment the matching line.
+
+| Screenshot | Path | Why it matters |
+|---|---|---|
+| The dashboard with the state map and national summary | `docs/screenshots/dashboard-map.png` | The landing view — shows at a glance that this is an analytics product, not a CSV viewer |
+| A company profile page with its multi-year approval/denial trend | `docs/screenshots/company-trend.png` | The core question the product answers: does this employer sponsor, and consistently? |
+| A state drill-down listing top employers | `docs/screenshots/state-drilldown.png` | Shows the aggregation layer the API and UI share |
+
+<!-- ![Dashboard and state map](docs/screenshots/dashboard-map.png) -->
+<!-- ![Company multi-year trend](docs/screenshots/company-trend.png) -->
+<!-- ![State drill-down](docs/screenshots/state-drilldown.png) -->
+
+## What it demonstrates technically
+
+- **An ingestion pipeline that survives a changing source.** USCIS yearly exports are not
+  schema-stable — column names and formats drift between fiscal years. The importer
+  normalizes those variations into one internal representation before anything is
+  persisted, so a new release year does not break existing queries.
+- **A deliberate storage decision with a correctness reason.** Source-level rows are
+  stored rather than collapsed per employer-year, because employers legitimately appear
+  multiple times in one fiscal year; aggregation happens at query time in the API. Raw
+  rows processed and unique rows stored are tracked as two separate metrics, so
+  deduplication stays observable instead of silently changing the numbers.
+- **Refresh is a first-class operation, not a one-off script** — automatic import on an
+  empty database, a `node-cron` annual schedule, a manual trigger over the API, safe
+  year-level replacement on rerun, and recorded sync-run metadata for progress reporting.
+- **Authoritative data and AI enrichment are kept separate.** OpenAI-generated company
+  context is layered on top of the USCIS records, so the core analytics stay deterministic
+  and correct whether or not enrichment ever runs.
+- **The API is rate-limited at the edges that matter** — a general limiter across `/api`,
+  and a tighter one in front of `/api/enrich`, which is the only route that costs money
+  per call.
 
 ## Product Overview
 
@@ -204,3 +248,53 @@ Some of the strongest aspects of the project are:
 H-1B employer petition data is sourced from the USCIS H-1B Employer Data Hub.
 
 AI enrichment, when enabled, adds supplemental company context on top of that source data and is treated as an enhancement rather than a replacement for official records.
+
+## Quick start
+
+Requires Node.js. Every command below is a script in the root or workspace
+`package.json`.
+
+```bash
+npm run install:all          # installs backend and frontend dependencies
+
+cp backend/.env.example backend/.env     # OPENAI_API_KEY is only needed for enrichment
+cp frontend/.env.example frontend/.env
+
+npm run dev                  # backend on :3001, frontend on :5173
+```
+
+The frontend dev server proxies `/api` to the backend, so open
+<http://localhost:5173>.
+
+With `USCIS_SYNC_ON_STARTUP=true` (the default in `.env.example`), the backend downloads
+and imports the USCIS dataset on first run when the database is empty. To populate it
+explicitly instead:
+
+```bash
+npm run sync:data            # download and import from the USCIS source
+npm run seed:demo            # or: a small demo dataset, no download
+npm run import               # or: import a CSV you already have
+```
+
+### API
+
+The backend serves its own endpoint index at <http://localhost:3001/api>.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/companies` | Employer search and company detail |
+| `GET /api/states` | Map and state drill-down analytics |
+| `GET /api/industries` | Distinct NAICS industry descriptions, for filters |
+| `GET /api/health` | Status, record count, last import, available years |
+| `POST /api/enrich` | AI company enrichment (rate-limited) |
+| `GET`/`POST` `/api/admin/refresh` | Refresh state and manual refresh trigger |
+
+## Status
+
+Working locally end to end — ingestion, storage, API, and UI. Not deployed: the dataset
+is imported into a local SQLite file, so the project is run rather than hosted. CodeQL
+analysis runs on every push and pull request to `main`. Built as a portfolio project.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
