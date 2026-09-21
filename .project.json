@@ -1,0 +1,7 @@
+{
+  "role": "Sole developer",
+  "resumeEligible": false,
+  "stack": ["Node.js", "Express", "SQLite", "better-sqlite3", "React 18", "Vite", "Recharts", "csv-parse", "node-cron", "OpenAI API"],
+  "oneLiner": "An H-1B employer intelligence platform turning yearly USCIS disclosure CSVs into searchable company and state analytics.",
+  "startDate": "2026-04"
+}
